@@ -1,0 +1,10 @@
+node_modules/
+dist/
+logs/
+run/
+coverage/
+*.tsbuildinfo
+.env
+.cache/
+.egg/
+package-lock.json
