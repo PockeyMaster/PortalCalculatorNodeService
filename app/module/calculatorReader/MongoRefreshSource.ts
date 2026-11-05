@@ -57,8 +57,8 @@ export class MongoRefreshSource implements RefreshSource {
       { maxTimeMS: this.settings.mongoTimeoutMs, readPreference: 'primary', projection: { status: 1, request: 1, keys: 1, emptyImageTargets: 1 } });
     if (!build || ![ 'ready', 'published' ].includes(build.status) || build.request?.channel !== this.settings.channel
       || build.request?.config?.service !== group.service || !Array.isArray(build.keys)) { throw new Error('Invalid product build metadata'); }
-    const dimensions = await this.db.collection(`${this.prefix}_aggregated_skus`).aggregate<{ _id: TargetDimensions }>([
-      { $match: { channel: this.settings.channel, service: group.service } },
+    const dimensions = await this.db.collection(`${this.prefix}_aggregate_build_skus`).aggregate<{ _id: TargetDimensions }>([
+      { $match: { buildId: group.version, service: group.service } },
       { $unwind: '$tabs' },
       { $group: { _id: { tag: '$productTag', region: '$region', tab: '$tabs' } } },
     ], { maxTimeMS: this.settings.mongoTimeoutMs, readPreference: 'primary' }).toArray();

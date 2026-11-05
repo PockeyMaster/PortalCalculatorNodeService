@@ -81,10 +81,11 @@ describe('current Mongo fallback repository', () => {
     assert.equal(result.product.ec2_vm[0].periodList, 0);
     assert.deepEqual(result.period.ec2_vm, [[{ periodType: 'MONTH', value: 1 }]]);
     assert.deepEqual(result.product.ec2_vm[0]._skuInfo, [ 'CPU:2' ]);
-    assert.equal(f.state.queries[0]!.name, 'calculator_cn_aggregated_skus');
-    assert.deepEqual(f.state.queries[0]!.filter, { channel: 'gray', service: 'ecs',
+    assert.equal(f.state.queries[0]!.name, 'calculator_cn_aggregate_current_states');
+    assert.equal(f.state.queries[2]!.name, 'calculator_cn_aggregate_build_skus');
+    assert.deepEqual(f.state.queries[2]!.filter, { buildId: 'current-version', service: 'ecs',
       productTag: query.tag, region: query.region, tabs: 'calc' });
-    assert.equal(f.state.queries[1]!.name, 'calculator_cn_aggregate_current_states');
+    assert.ok(f.state.queries.every(item => !item.name.endsWith('_aggregated_skus')));
     assert.equal(f.state.closed, 1);
   });
 
@@ -95,7 +96,7 @@ describe('current Mongo fallback repository', () => {
       else { f.state.build.keys = []; }
       const result = JSON.parse((await f.reader.read(query))!);
       assert.deepEqual(result.product, {});
-      assert.equal(f.state.queries.length, 3);
+      assert.equal(f.state.queries.length, 2);
     }
   });
 
@@ -132,7 +133,7 @@ describe('current Mongo fallback repository', () => {
     assert.deepEqual(empty.product, []);
   });
 
-  it('rejects mixed view versions and a pointer changed after the SKU read', async () => {
+  it('rejects snapshot rows inconsistent with the selected current version', async () => {
     const mixed = fixture();
     mixed.state.rows.push({ ...mixed.state.rows[0], buildId: 'another-version' });
     await assert.rejects(mixed.reader.read(query), /version changed/);
@@ -140,11 +141,11 @@ describe('current Mongo fallback repository', () => {
     const changed = fixture();
     changed.state.current!.buildId = 'new-pointer';
     await assert.rejects(changed.reader.read(query), /version changed/);
-    assert.equal(changed.state.queries.length, 2, 'view is read before the authoritative version check');
+    assert.equal(changed.state.queries[2]!.filter.buildId, 'new-pointer');
     assert.equal(changed.state.closed, 1);
   });
 
-  it('rejects view rows without version metadata', async () => {
+  it('rejects snapshot rows without version metadata', async () => {
     const f = fixture();
     delete f.state.rows[0]!.buildId;
     await assert.rejects(f.reader.read(query), /SKU version/);

@@ -4,8 +4,9 @@ HTTP 接口从 Redis 读取固定 Key；未命中、超时或读取失败时回�
 请求本身不写缓存，不下载静态资产、不同步源产品、不执行管理面聚合，也不创建索引或视图。
 
 config/language/menuInfo 使用 `compiled_current_documents` 当前视图。
-productInfo 先按 channel/service/productTag/region/tabs 查询 `aggregated_skus` 当前视图，SKU 查询不传 buildId，随后恢复产品 JSON。
-读取后校验行版本与当前指针一致，拒绝混合版本；构建元数据继续用于空镜像目标、已移除 Key 和空服务结果。
+productInfo 先按 channel/service 读取当前指针，固定本次 buildId，再按 buildId/service/productTag/region/tabs 查询 `aggregate_build_skus` 的已提交快照。
+HTTP 回退和 Redis 后台刷新均使用这条索引读取路径，避免实时关联历史 SKU。构建元数据继续用于空镜像目标、已移除 Key 和空服务结果。
+指针读取后的版本更新不影响已经选定的不可变快照；后台刷新仍在写缓存前后检查当前版本，变化时重试。
 调用方只传业务参数，不传 buildId。站点和 channel 由部署配置确定。
 
 ## 后台任务
@@ -18,11 +19,11 @@ productInfo 先按 channel/service/productTag/region/tabs 查询 `aggregated_sku
 1. 获取同站点、同 channel 的 Redis 租约；其他实例持有时跳过。
 2. 从 Mongo 主节点投影当前产品指针和配置/菜单/语言版本元数据，不下载所有配置正文或源产品。
 3. 比较 Redis 保存的版本和 Key 存在性。版本未变化且当前 Key 都存在则跳过。
-4. 有变化时按业务维度读取 Mongo 当前视图，并校验行版本符合本轮发现的版本，重建 productInfo 或读取编译后的配置、菜单、语言正文，覆写对应 Redis Key。
+4. 有变化时按已发现的当前 buildId 直接查询 SKU 快照并校验行版本，重建 productInfo 或读取编译后的配置、菜单、语言正文，覆写对应 Redis Key。
 5. 完成该服务或该文档的所有 Key 后，确认 Mongo 指针仍未改变，再记录刷新完成的版本。
 
 productInfo 以服务为一组，config/menuInfo/language 各固定 Key 为一组。
-产品 Key 的维度从当前 SKU 视图按 service/channel 汇总 tag/region/tab，再补充构建的空镜像目标，必须与已完成构建的 Key 列表一致。
+产品 Key 的维度从已选定快照按 buildId/service 汇总 tag/region/tab，再补充构建的空镜像目标，必须与已完成构建的 Key 列表一致。
 维度发现后再次检查当前指针；后台版本标记及变更检测仍使用 buildId，发生切换时中止该组并在后续周期重试。
 不按下划线拆 Key，避免服务名或 tag 含下划线时解析错误。
 
