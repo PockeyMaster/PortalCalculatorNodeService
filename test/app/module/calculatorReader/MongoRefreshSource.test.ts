@@ -60,7 +60,7 @@ describe('Mongo refresh source discovery', () => {
     const f = fixture();
     const result = await f.source.targets(group);
     assert.deepEqual(result, [{ type: 'productInfo', site: 'zh-CN', channel: 'gray', service, ...dimensions, stableKey }]);
-    assert.deepEqual(f.state.queries[1].filter.$match, { channel: 'gray', service, buildId: 'build1' });
+    assert.deepEqual(f.state.queries[1].filter.$match, { channel: 'gray', service });
     assert.equal(f.state.queries[1].options.readPreference, 'primary');
   });
 
@@ -83,6 +83,12 @@ describe('Mongo refresh source discovery', () => {
     await assert.rejects(invalid.source.targets(group), /empty image/);
     const foreign = fixture(); foreign.state.build.request.channel = 'prod';
     await assert.rejects(foreign.source.targets(group), /metadata/);
+  });
+
+  it('rejects dimensions if the current view changed during target discovery', async () => {
+    const f = fixture();
+    f.state.currentBuild = 'build2';
+    await assert.rejects(f.source.targets(group), /version changed/);
   });
 
   it('checks the authoritative pointer before acknowledging a generation', async () => {

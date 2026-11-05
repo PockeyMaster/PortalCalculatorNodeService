@@ -7,10 +7,13 @@ import type { CalculatorLookup, ReaderObject } from '../../../../app/module/calc
 describe('pinned Mongo refresh reads', () => {
   it('refuses a product pointer that changed since discovery, using primary reads', async () => {
     let count = 0;
-    const db = { collection() { return { async findOne(_filter: unknown, options: ReaderObject) {
+    const db = { collection(name: string) { return { find(filter: ReaderObject, options: ReaderObject) {
       count++;
+      assert.equal(name, 'calculator_cn_aggregated_skus');
+      assert.equal('buildId' in filter, false);
       assert.equal(options.readPreference, 'primary');
-      return { buildId: 'new-build' };
+      return { sort() { return this; }, batchSize() { return this; }, async close() { /* no server */ },
+        async* [Symbol.asyncIterator]() { yield { buildId: 'new-build' }; } };
     } }; } } as unknown as Db;
     const lookup: CalculatorLookup = { type: 'productInfo', site: 'zh-CN', channel: 'gray', service: 'ecs',
       region: 'region-1', tag: 'general.online.portal', tab: 'calc', stableKey: 'key' };

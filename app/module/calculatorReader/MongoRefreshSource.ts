@@ -58,10 +58,11 @@ export class MongoRefreshSource implements RefreshSource {
     if (!build || ![ 'ready', 'published' ].includes(build.status) || build.request?.channel !== this.settings.channel
       || build.request?.config?.service !== group.service || !Array.isArray(build.keys)) { throw new Error('Invalid product build metadata'); }
     const dimensions = await this.db.collection(`${this.prefix}_aggregated_skus`).aggregate<{ _id: TargetDimensions }>([
-      { $match: { channel: this.settings.channel, service: group.service, buildId: group.version } },
+      { $match: { channel: this.settings.channel, service: group.service } },
       { $unwind: '$tabs' },
       { $group: { _id: { tag: '$productTag', region: '$region', tab: '$tabs' } } },
     ], { maxTimeMS: this.settings.mongoTimeoutMs, readPreference: 'primary' }).toArray();
+    if (!await this.isCurrent(group)) { throw new Error('Product source version changed during target discovery'); }
     const selected = new Map<string, CalculatorLookup>();
     for (const { _id } of dimensions) { this.addTarget(group, selected, _id); }
     // 无 SKU 的免费镜像桶用构建元数据恢复，不依赖按下划线猜测 Redis Key 的各段。

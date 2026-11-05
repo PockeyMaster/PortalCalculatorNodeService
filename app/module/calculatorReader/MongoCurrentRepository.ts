@@ -76,12 +76,15 @@ export class MongoCurrentRepository implements CurrentReader {
   private async product(lookup: CalculatorLookup, prefix: string, expectedVersion?: string): Promise<string | null> {
     const { service, tag, region, tab } = lookup;
     if (!service || !tag || !region || !tab) { throw new Error('Missing productInfo dimensions'); }
+    // 直接从当前视图按业务维度读 SKU；随后校验指针，防止读取途中切换版本。
+    const rows = await this.rows(lookup, prefix, expectedVersion);
     const current = await this.db.collection<CurrentState>(`${prefix}_aggregate_current_states`).findOne({
       channel: lookup.channel, service,
     }, this.readOptions(expectedVersion));
     if (!current) { return null; }
-    if (expectedVersion !== undefined && expectedVersion !== current.buildId) {
-      throw new Error('Product source version changed during refresh');
+    if ((expectedVersion !== undefined && expectedVersion !== current.buildId)
+      || (rows.buildId !== undefined && rows.buildId !== current.buildId)) {
+      throw new Error('Product source version changed during read');
     }
     if (current.site !== lookup.site || current.channel !== lookup.channel || current.service !== service
       || typeof current.buildId !== 'string' || !current.buildId || !Number.isSafeInteger(current.skuCount) || current.skuCount < 0) {
@@ -94,7 +97,7 @@ export class MongoCurrentRepository implements CurrentReader {
     const empty: ReaderProductDocument = { urlPath: service, tag, region, tab, product: {}, period: {} };
     // 不在当前版本的 Key 代表已移除的地域/标签/页面，返回合法空文档，不复活历史规格。
     if (current.skuCount === 0 || !build.keys.includes(lookup.stableKey)) { return this.serializeProduct(empty); }
-    const product = await this.rows(lookup, prefix, current.buildId, expectedVersion);
+    const product = rows.product;
     const target = `${tag}\u0000${region}\u0000${tab}`;
     if (build.emptyImageTargets?.includes(target)) { product[READER_IMAGE_BUCKET] ??= []; }
     if (!Object.keys(product).length) { throw new Error('Current product rows are missing'); }
@@ -112,14 +115,23 @@ export class MongoCurrentRepository implements CurrentReader {
     return JSON.stringify(document.tab === 'listCalc' ? publishedListCalcDocument(document) : document);
   }
 
-  private async rows(lookup: CalculatorLookup, prefix: string, buildId: string, expectedVersion?: string): Promise<Record<string, ReaderObject[]>> {
+  private async rows(lookup: CalculatorLookup, prefix: string, expectedVersion?: string): Promise<{
+    product: Record<string, ReaderObject[]>; buildId?: string;
+  }> {
     const cursor = this.db.collection<ReaderObject>(`${prefix}_aggregated_skus`).find({
-      channel: lookup.channel, service: lookup.service, buildId,
+      channel: lookup.channel, service: lookup.service,
       productTag: lookup.tag, region: lookup.region, tabs: lookup.tab,
     }, this.readOptions(expectedVersion)).sort({ bucket: 1, resourceSpecCode: 1, locationType: 1, locationCode: 1 }).batchSize(500);
     const product: Record<string, ReaderObject[]> = {};
+    let buildId: string | undefined;
     try {
       for await (const row of cursor) {
+        if (typeof row.buildId !== 'string' || !row.buildId) { throw new Error('Invalid current SKU version'); }
+        if ((expectedVersion !== undefined && row.buildId !== expectedVersion)
+          || (buildId !== undefined && row.buildId !== buildId)) {
+          throw new Error('Product source version changed during read');
+        }
+        buildId = row.buildId;
         const bucket = row.bucket;
         if (typeof bucket !== 'string' || !bucket || [ '__proto__', 'constructor', 'prototype' ].includes(bucket)) {
           throw new Error('Invalid current product bucket');
@@ -127,6 +139,6 @@ export class MongoCurrentRepository implements CurrentReader {
         (product[bucket] ??= []).push(decodePublishedSku(row));
       }
     } finally { await cursor.close(); }
-    return product;
+    return { product, ...(buildId === undefined ? {} : { buildId }) };
   }
 }

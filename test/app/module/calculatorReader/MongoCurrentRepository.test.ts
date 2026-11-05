@@ -81,9 +81,10 @@ describe('current Mongo fallback repository', () => {
     assert.equal(result.product.ec2_vm[0].periodList, 0);
     assert.deepEqual(result.period.ec2_vm, [[{ periodType: 'MONTH', value: 1 }]]);
     assert.deepEqual(result.product.ec2_vm[0]._skuInfo, [ 'CPU:2' ]);
-    assert.equal(f.state.queries[2]!.name, 'calculator_cn_aggregated_skus');
-    assert.deepEqual(f.state.queries[2]!.filter, { channel: 'gray', service: 'ecs', buildId: 'current-version',
+    assert.equal(f.state.queries[0]!.name, 'calculator_cn_aggregated_skus');
+    assert.deepEqual(f.state.queries[0]!.filter, { channel: 'gray', service: 'ecs',
       productTag: query.tag, region: query.region, tabs: 'calc' });
+    assert.equal(f.state.queries[1]!.name, 'calculator_cn_aggregate_current_states');
     assert.equal(f.state.closed, 1);
   });
 
@@ -94,7 +95,7 @@ describe('current Mongo fallback repository', () => {
       else { f.state.build.keys = []; }
       const result = JSON.parse((await f.reader.read(query))!);
       assert.deepEqual(result.product, {});
-      assert.equal(f.state.queries.length, 2);
+      assert.equal(f.state.queries.length, 3);
     }
   });
 
@@ -114,7 +115,7 @@ describe('current Mongo fallback repository', () => {
     const f = fixture();
     f.state.rows[0]!.locationType = '2';
     f.state.rows[0]!.locationCode = 'test-ies';
-    f.state.rows.push({ bucket: 'ec2_vm.image.special', syntheticImage: true, attributes: { id: 'image', name: 'Free image' } });
+    f.state.rows.push({ buildId: 'current-version', bucket: 'ec2_vm.image.special', syntheticImage: true, attributes: { id: 'image', name: 'Free image' } });
     const result = JSON.parse((await f.reader.read(query))!);
     assert.equal(result.product.ec2_vm[0].location_code, 'test-ies');
     assert.deepEqual(result.product['ec2_vm.image.special'], [{ id: 'image', name: 'Free image' }]);
@@ -129,6 +130,25 @@ describe('current Mongo fallback repository', () => {
     f.state.build.keys = [];
     const empty = JSON.parse((await f.reader.read(lookup))!);
     assert.deepEqual(empty.product, []);
+  });
+
+  it('rejects mixed view versions and a pointer changed after the SKU read', async () => {
+    const mixed = fixture();
+    mixed.state.rows.push({ ...mixed.state.rows[0], buildId: 'another-version' });
+    await assert.rejects(mixed.reader.read(query), /version changed/);
+    assert.equal(mixed.state.closed, 1);
+    const changed = fixture();
+    changed.state.current!.buildId = 'new-pointer';
+    await assert.rejects(changed.reader.read(query), /version changed/);
+    assert.equal(changed.state.queries.length, 2, 'view is read before the authoritative version check');
+    assert.equal(changed.state.closed, 1);
+  });
+
+  it('rejects view rows without version metadata', async () => {
+    const f = fixture();
+    delete f.state.rows[0]!.buildId;
+    await assert.rejects(f.reader.read(query), /SKU version/);
+    assert.equal(f.state.closed, 1);
   });
 
   it('closes the cursor even when a bad bucket is rejected', async () => {

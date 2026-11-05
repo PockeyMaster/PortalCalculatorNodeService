@@ -43,10 +43,10 @@ urlPaht 兼容为 urlPath；同时提供且不同返回 400。language 支持 zh
 ## MongoDB 读取
 
 - config/menuInfo/language：按固定 stableKey 读取 `calculator_{cn|intl}_compiled_current_documents` 只读视图，验证 SHA-256 和字节数。
-- productInfo：读取 `calculator_{cn|intl}_aggregate_current_states` 的 service/channel 当前指针，
-  验证对应 aggregate_builds 状态及 SKU 数，按内部 buildId 查询 aggregated_skus 并恢复 periodList/listCalc。
+- productInfo：先按 channel/service/productTag/region/tabs 直接查询 `calculator_{cn|intl}_aggregated_skus` 当前视图，
+  恢复 periodList/listCalc；SKU 查询不携带 buildId。读取后校验当前指针及构建元数据，拒绝读取途中的版本变化，并恢复空镜像目标。
 - 不再读取 redis_publish_records，不要求构建已经 published，不读取 aggregate_build_skus 的最新草稿。
-- buildId 仅由仓储内部处理，接口调用者不感知。免费镜像、位置属性、additionProduct 和 tab 载荷沿用管理面的存储协议。
+- buildId 仅用于内部版本校验和后台刷新检测，接口调用者不感知。后台仍读取 aggregate_current_states 与 aggregate_builds 的元数据，用于识别变更、校验目标 Key 和清空已移除的地域。免费镜像、位置属性、additionProduct 和 tab 载荷沿用管理面的存储协议。
 - 管理面必须先成功提交正常非 dryRun 更新及对应菜单/语言；历史 ready 快照不会自动成为当前视图内容。
 
 读取账号只需相应集合/视图的读权限；视图和索引必须由管理面创建。首次回退连接 Mongo，不阻塞 Redis 命中路径。
