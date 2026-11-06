@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { Db } from 'mongodb';
-import { decodePublishedSku, indexPublishedPeriods, publishedListCalcDocument, READER_IMAGE_BUCKET } from './ProductDocumentCodec';
+import { decodePublishedSku, indexPublishedPeriodsInPlace, publishedListCalcDocument, READER_IMAGE_BUCKET } from './ProductDocumentCodec';
 import type { CalculatorLookup, CurrentReader, ReaderObject, ReaderProductDocument } from './types';
 
 interface CurrentState {
@@ -89,7 +89,8 @@ export class MongoCurrentRepository implements CurrentReader {
       throw new Error('Invalid current product pointer');
     }
     const build = await this.db.collection<CurrentBuild>(`${prefix}_aggregate_builds`).findOne({ _id: current.buildId }, {
-      projection: { status: 1, skuCount: 1, request: 1, keys: 1, emptyImageTargets: 1 }, ...this.readOptions(expectedVersion),
+      // 只取校验版本所需的配置字段，避免每个 Key 都反序列化完整 dataConfig/funcConfig。
+      projection: { status: 1, skuCount: 1, 'request.channel': 1, 'request.config.service': 1, keys: 1, emptyImageTargets: 1 }, ...this.readOptions(expectedVersion),
     });
     this.validateBuild(build, current);
     const empty: ReaderProductDocument = { urlPath: service, tag, region, tab, product: {}, period: {} };
@@ -100,7 +101,8 @@ export class MongoCurrentRepository implements CurrentReader {
     const target = `${tag}\u0000${region}\u0000${tab}`;
     if (build.emptyImageTargets?.includes(target)) { product[READER_IMAGE_BUCKET] ??= []; }
     if (!Object.keys(product).length) { throw new Error('Current product rows are missing'); }
-    return this.serializeProduct({ ...indexPublishedPeriods({ product, period: {} }), urlPath: service, tag, region, tab });
+    // rows() 已恢复成本次请求独占的对象；周期索引可原地处理，避免整份产品再次克隆。
+    return this.serializeProduct({ ...indexPublishedPeriodsInPlace({ product, period: {} }), urlPath: service, tag, region, tab });
   }
 
   private validateBuild(build: CurrentBuild | null, current: CurrentState): asserts build is CurrentBuild {

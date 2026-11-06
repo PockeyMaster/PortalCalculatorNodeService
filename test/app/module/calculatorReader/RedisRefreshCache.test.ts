@@ -46,6 +46,8 @@ function fixture() {
   return { cache, values, hashes, connects: () => connects };
 }
 
+export { fixture as redisRefreshFixture };
+
 describe('Redis refresh ownership and persistent metadata', () => {
   it('acquires once and never renews or releases a different owner lease', async () => {
     const f = fixture();

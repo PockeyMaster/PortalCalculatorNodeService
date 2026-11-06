@@ -9,6 +9,10 @@ HTTP 回退和 Redis 后台刷新均使用这条索引读取路径，避免实�
 指针读取后的版本更新不影响已经选定的不可变快照；后台刷新仍在写缓存前后检查当前版本，变化时重试。
 调用方只传业务参数，不传 buildId。站点和 channel 由部署配置确定。
 
+构建元数据只投影校验所需的 request.channel 和 request.config.service，不读取完整服务配置。
+SKU 恢复时仍复制快照字段，随后对本次读取独占的产品原地生成周期索引，避免再深拷贝整份产品。
+免费镜像、组合子产品、去重、排序和最终 JSON 协议保持不变；通用周期工具仍保留不修改输入的版本。
+
 ## 后台任务
 
 配置 Redis 后默认启用，在 Egg `didReady` 后每 60000 毫秒检查一次，首次检查在一个周期后执行。
@@ -60,3 +64,12 @@ Mongo 只需当前视图/集合的读取权限。Redis 需允许 GET/SET、EXIST
 日志前缀 `[cache-refresh]` 包含任务间隔、服务/文档组、更新数量、失败数量、租约状态和耗时。
 不打印原始数据、连接凭据或驱动异常文本；出错时先结合 Mongo/Redis 的运维日志排查连接与权限。
 单元测试模拟数据库和缓存；上线时仍需验证真实 Mongo 视图权限、Redis Lua 权限和管理面更新后的刷新结果。
+
+
+## 当前指针与刷新回归
+
+产品读取与后台目标发现均通过当前指针选择 aggregate_build_skus，运行时不读取旧产品视图。
+CurrentSnapshotRefresh.test.ts 串联 MongoCurrentRepository、MongoRefreshSource、
+CacheRefreshService 和 RedisRefreshCache，验证价格更新、增加和删除地域、空版本、失败重试、
+读取途中指针切换以及 Redis 完成版本标记。HTTP 回退本身保持只读，后台在下一轮刷新缓存。
+该测试使用存储协议替身；真实环境仍需验证 Mongo 索引、Redis 连通性及 Lua 权限。

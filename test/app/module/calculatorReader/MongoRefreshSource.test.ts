@@ -27,7 +27,11 @@ function fixture() {
       },
       async findOne(filter: ReaderObject, options: ReaderObject) {
         state.queries.push({ name, filter, options });
-        if (name.endsWith('_aggregate_builds')) { return state.build; }
+        if (name.endsWith('_aggregate_builds')) {
+          assert.deepEqual(options.projection, { status: 1, 'request.channel': 1,
+            'request.config.service': 1, keys: 1, emptyImageTargets: 1 });
+          return state.build;
+        }
         if (name.endsWith('_aggregate_current_states')) { return { buildId: state.currentBuild }; }
         return state.compiled[0];
       },
@@ -84,6 +88,8 @@ describe('Mongo refresh source discovery', () => {
     await assert.rejects(invalid.source.targets(group), /empty image/);
     const foreign = fixture(); foreign.state.build.request.channel = 'prod';
     await assert.rejects(foreign.source.targets(group), /metadata/);
+    const wrongService = fixture(); wrongService.state.build.request.config.service = 'other';
+    await assert.rejects(wrongService.source.targets(group), /metadata/);
   });
 
   it('rejects dimensions if the current pointer changed during target discovery', async () => {

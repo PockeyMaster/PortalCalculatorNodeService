@@ -1,0 +1,601 @@
+{
+  "input": {
+    "product": {
+      "ec2_vm.image.special": [
+        {
+          "id": "image",
+          "name": "免费镜像",
+          "metadata": {
+            "os": "Linux"
+          }
+        }
+      ],
+      "ec2_vm": [
+        {
+          "resourceType": "hws.resource.type.vm",
+          "cloudServiceType": "hws.service.type.ec2",
+          "resourceSpecCode": "spec-b",
+          "planList": [
+            {
+              "billingMode": "MONTHLY",
+              "periodNum": 12,
+              "amount": "2|4",
+              "billingEvent": "event.a|event.b",
+              "measureUnit": 1
+            },
+            {
+              "billingMode": "RI",
+              "amount": 9
+            },
+            {
+              "billingMode": "ONDEMAND",
+              "amount": 0
+            }
+          ],
+          "periodList": [
+            {
+              "periodType": "MONTH",
+              "periodValueList": [
+                {
+                  "value": 1,
+                  "displayName": "1个月"
+                },
+                {
+                  "value": 12
+                }
+              ]
+            }
+          ],
+          "cpu": "2",
+          "productSpecSysDesc": "核数:2;内存:4GB",
+          "additionProduct": {
+            "resourceType": "hws.resource.type.volume",
+            "cloudServiceType": "hws.service.type.ebs",
+            "resourceSpecCode": "disk-a",
+            "periodList": [
+              {
+                "periodType": "MONTH",
+                "periodValueList": [
+                  {
+                    "value": 1,
+                    "displayName": "1个月"
+                  },
+                  {
+                    "value": 12
+                  }
+                ]
+              }
+            ],
+            "planList": [
+              {
+                "billingMode": "MONTHLY",
+                "amount": 3
+              }
+            ]
+          },
+          "_skuInfo": [
+            "cpu:2"
+          ]
+        },
+        {
+          "resourceType": "hws.resource.type.vm",
+          "cloudServiceType": "hws.service.type.ec2",
+          "resourceSpecCode": "spec-a",
+          "periodList": [
+            {
+              "periodType": "YEAR",
+              "periodValueList": [
+                {
+                  "value": 1
+                }
+              ]
+            }
+          ],
+          "planList": [
+            {
+              "billingMode": "YEARLY",
+              "periodNum": 3,
+              "billingEvent": "event",
+              "productId": "id",
+              "amount": 10,
+              "divisionList": [
+                {
+                  "amount": 1,
+                  "division": {
+                    "min": 0,
+                    "max": 10
+                  }
+                },
+                {
+                  "amount": 2,
+                  "division": {
+                    "min": 10,
+                    "max": 20
+                  }
+                }
+              ]
+            }
+          ],
+          "location_type": "2",
+          "location_code": "test-location",
+          "_skuInfo": []
+        },
+        {
+          "resourceType": "hws.resource.type.vm",
+          "cloudServiceType": "hws.service.type.ec2",
+          "resourceSpecCode": "spec-b",
+          "planList": [
+            {
+              "billingMode": "MONTHLY",
+              "periodNum": 12,
+              "amount": "2|4",
+              "billingEvent": "event.a|event.b",
+              "measureUnit": 1
+            },
+            {
+              "billingMode": "RI",
+              "amount": 9
+            },
+            {
+              "billingMode": "ONDEMAND",
+              "amount": 0
+            }
+          ],
+          "periodList": [
+            {
+              "periodType": "MONTH",
+              "periodValueList": [
+                {
+                  "value": 1,
+                  "displayName": "1个月"
+                },
+                {
+                  "value": 12
+                }
+              ]
+            }
+          ],
+          "cpu": "2",
+          "productSpecSysDesc": "核数:2;内存:4GB",
+          "additionProduct": {
+            "resourceType": "hws.resource.type.volume",
+            "cloudServiceType": "hws.service.type.ebs",
+            "resourceSpecCode": "disk-a",
+            "periodList": [
+              {
+                "periodType": "MONTH",
+                "periodValueList": [
+                  {
+                    "value": 1,
+                    "displayName": "1个月"
+                  },
+                  {
+                    "value": 12
+                  }
+                ]
+              }
+            ],
+            "planList": [
+              {
+                "billingMode": "MONTHLY",
+                "amount": 3
+              }
+            ]
+          },
+          "_skuInfo": [
+            "cpu:2"
+          ]
+        },
+        {
+          "resourceType": "hws.resource.type.vm",
+          "cloudServiceType": "hws.service.type.ec2",
+          "resourceSpecCode": "spec-c",
+          "planList": [
+            {
+              "billingMode": "MONTHLY",
+              "periodNum": 12,
+              "amount": "2|4",
+              "billingEvent": "event.a|event.b",
+              "measureUnit": 1
+            },
+            {
+              "billingMode": "RI",
+              "amount": 9
+            },
+            {
+              "billingMode": "ONDEMAND",
+              "amount": 0
+            }
+          ],
+          "periodList": [
+            {
+              "periodType": "MONTH",
+              "periodValueList": [
+                {
+                  "value": 1,
+                  "displayName": "1个月"
+                },
+                {
+                  "value": 12
+                }
+              ]
+            }
+          ],
+          "cpu": "2",
+          "productSpecSysDesc": "核数:2;内存:4GB",
+          "_skuInfo": [
+            "cpu:2"
+          ]
+        }
+      ],
+      "ebs_volume": [
+        {
+          "resourceType": "hws.resource.type.volume",
+          "cloudServiceType": "hws.service.type.ebs",
+          "resourceSpecCode": "disk-a",
+          "periodList": [
+            {
+              "periodType": "MONTH",
+              "periodValueList": [
+                {
+                  "value": 1,
+                  "displayName": "1个月"
+                },
+                {
+                  "value": 12
+                }
+              ]
+            }
+          ],
+          "planList": [
+            {
+              "billingMode": "MONTHLY",
+              "amount": 3
+            }
+          ]
+        }
+      ],
+      "empty_bucket": []
+    },
+    "period": {
+      "ignored_previous_period": [
+        [
+          {
+            "old": true
+          }
+        ]
+      ]
+    }
+  },
+  "expected": {
+    "product": {
+      "ec2_vm.image.special": [
+        {
+          "id": "image",
+          "name": "免费镜像",
+          "metadata": {
+            "os": "Linux"
+          }
+        }
+      ],
+      "ec2_vm": [
+        {
+          "resourceType": "hws.resource.type.vm",
+          "cloudServiceType": "hws.service.type.ec2",
+          "resourceSpecCode": "spec-b",
+          "planList": [
+            {
+              "billingMode": "MONTHLY",
+              "periodNum": 12,
+              "amount": "2|4",
+              "billingEvent": "event.a|event.b",
+              "measureUnit": 1
+            },
+            {
+              "billingMode": "RI",
+              "amount": 9
+            },
+            {
+              "billingMode": "ONDEMAND",
+              "amount": 0
+            }
+          ],
+          "periodList": 0,
+          "cpu": "2",
+          "productSpecSysDesc": "核数:2;内存:4GB",
+          "additionProduct": {
+            "resourceType": "hws.resource.type.volume",
+            "cloudServiceType": "hws.service.type.ebs",
+            "resourceSpecCode": "disk-a",
+            "periodList": 0,
+            "planList": [
+              {
+                "billingMode": "MONTHLY",
+                "amount": 3
+              }
+            ]
+          },
+          "_skuInfo": [
+            "cpu:2"
+          ]
+        },
+        {
+          "resourceType": "hws.resource.type.vm",
+          "cloudServiceType": "hws.service.type.ec2",
+          "resourceSpecCode": "spec-c",
+          "planList": [
+            {
+              "billingMode": "MONTHLY",
+              "periodNum": 12,
+              "amount": "2|4",
+              "billingEvent": "event.a|event.b",
+              "measureUnit": 1
+            },
+            {
+              "billingMode": "RI",
+              "amount": 9
+            },
+            {
+              "billingMode": "ONDEMAND",
+              "amount": 0
+            }
+          ],
+          "periodList": 0,
+          "cpu": "2",
+          "productSpecSysDesc": "核数:2;内存:4GB",
+          "_skuInfo": [
+            "cpu:2"
+          ]
+        },
+        {
+          "resourceType": "hws.resource.type.vm",
+          "cloudServiceType": "hws.service.type.ec2",
+          "resourceSpecCode": "spec-a",
+          "periodList": 1,
+          "planList": [
+            {
+              "billingMode": "YEARLY",
+              "periodNum": 3,
+              "billingEvent": "event",
+              "productId": "id",
+              "amount": 10,
+              "divisionList": [
+                {
+                  "amount": 1,
+                  "division": {
+                    "min": 0,
+                    "max": 10
+                  }
+                },
+                {
+                  "amount": 2,
+                  "division": {
+                    "min": 10,
+                    "max": 20
+                  }
+                }
+              ]
+            }
+          ],
+          "location_type": "2",
+          "location_code": "test-location",
+          "_skuInfo": []
+        }
+      ],
+      "ebs_volume": [
+        {
+          "resourceType": "hws.resource.type.volume",
+          "cloudServiceType": "hws.service.type.ebs",
+          "resourceSpecCode": "disk-a",
+          "periodList": 0,
+          "planList": [
+            {
+              "billingMode": "MONTHLY",
+              "amount": 3
+            }
+          ]
+        }
+      ],
+      "empty_bucket": []
+    },
+    "period": {
+      "ebs_volume": [
+        [
+          {
+            "periodType": "MONTH",
+            "periodValueList": [
+              {
+                "value": 1,
+                "displayName": "1个月"
+              },
+              {
+                "value": 12
+              }
+            ]
+          }
+        ]
+      ],
+      "ec2_vm": [
+        [
+          {
+            "periodType": "MONTH",
+            "periodValueList": [
+              {
+                "value": 1,
+                "displayName": "1个月"
+              },
+              {
+                "value": 12
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "periodType": "YEAR",
+            "periodValueList": [
+              {
+                "value": 1
+              }
+            ]
+          }
+        ]
+      ],
+      "ec2_vm.image.special": [],
+      "empty_bucket": []
+    }
+  },
+  "expectedListCalc": {
+    "product": [
+      {
+        "resourceType": "hws.resource.type.vm",
+        "cloudServiceType": "hws.service.type.ec2",
+        "resourceSpecCode": "spec-b",
+        "productSpecSysDesc": [
+          "核数:2",
+          "内存:4GB"
+        ],
+        "billingEvent": [
+          "event.a",
+          "event.b"
+        ],
+        "amount": [
+          "2",
+          "4"
+        ],
+        "billingTime": "MONTHLY_12",
+        "tableUnit": " BSSUNIT.unit.1"
+      },
+      {
+        "resourceType": "hws.resource.type.vm",
+        "cloudServiceType": "hws.service.type.ec2",
+        "resourceSpecCode": "spec-b",
+        "productSpecSysDesc": [
+          "核数:2",
+          "内存:4GB"
+        ],
+        "amount": [
+          "9"
+        ],
+        "billingTime": "RI"
+      },
+      {
+        "resourceType": "hws.resource.type.vm",
+        "cloudServiceType": "hws.service.type.ec2",
+        "resourceSpecCode": "spec-c",
+        "productSpecSysDesc": [
+          "核数:2",
+          "内存:4GB"
+        ],
+        "billingEvent": [
+          "event.a",
+          "event.b"
+        ],
+        "amount": [
+          "2",
+          "4"
+        ],
+        "billingTime": "MONTHLY_12",
+        "tableUnit": " BSSUNIT.unit.1"
+      },
+      {
+        "resourceType": "hws.resource.type.vm",
+        "cloudServiceType": "hws.service.type.ec2",
+        "resourceSpecCode": "spec-c",
+        "productSpecSysDesc": [
+          "核数:2",
+          "内存:4GB"
+        ],
+        "amount": [
+          "9"
+        ],
+        "billingTime": "RI"
+      },
+      {
+        "resourceType": "hws.resource.type.vm",
+        "cloudServiceType": "hws.service.type.ec2",
+        "resourceSpecCode": "spec-a",
+        "billingEvent": [
+          "event"
+        ],
+        "productId": [
+          "id"
+        ],
+        "amount": [
+          1,
+          2
+        ],
+        "billingTime": "YEARLY_3",
+        "division": [
+          {
+            "min": 0,
+            "max": 10
+          },
+          {
+            "min": 10,
+            "max": 20
+          }
+        ]
+      },
+      {
+        "resourceType": "hws.resource.type.volume",
+        "cloudServiceType": "hws.service.type.ebs",
+        "resourceSpecCode": "disk-a",
+        "amount": [
+          "3"
+        ],
+        "billingTime": "MONTHLY_1"
+      }
+    ],
+    "period": {
+      "ebs_volume": [
+        [
+          {
+            "periodType": "MONTH",
+            "periodValueList": [
+              {
+                "value": 1,
+                "displayName": "1个月"
+              },
+              {
+                "value": 12
+              }
+            ]
+          }
+        ]
+      ],
+      "ec2_vm": [
+        [
+          {
+            "periodType": "MONTH",
+            "periodValueList": [
+              {
+                "value": 1,
+                "displayName": "1个月"
+              },
+              {
+                "value": 12
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "periodType": "YEAR",
+            "periodValueList": [
+              {
+                "value": 1
+              }
+            ]
+          }
+        ]
+      ],
+      "ec2_vm.image.special": [],
+      "empty_bucket": []
+    },
+    "urlPath": "ecs",
+    "tag": "general.online.portal",
+    "region": "test-region",
+    "tab": "listCalc"
+  }
+}

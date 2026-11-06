@@ -26,7 +26,11 @@ function fixture() {
         state.queries.push({ name, filter });
         if (name.endsWith('_compiled_current_documents')) { return state.compiled; }
         if (name.endsWith('_aggregate_current_states')) { return state.current; }
-        if (name.endsWith('_aggregate_builds')) { return state.build; }
+        if (name.endsWith('_aggregate_builds')) {
+          assert.deepEqual(options.projection, { status: 1, skuCount: 1, 'request.channel': 1,
+            'request.config.service': 1, keys: 1, emptyImageTargets: 1 });
+          return state.build;
+        }
         throw new Error(`Unexpected collection ${name}`);
       },
       find(filter: ReaderObject, options: ReaderObject) {
@@ -76,7 +80,9 @@ describe('current Mongo fallback repository', () => {
 
   it('reconstructs products from the committed SKU version even though the snapshot is only ready', async () => {
     const f = fixture();
+    const originalRows = JSON.stringify(f.state.rows);
     const result = JSON.parse((await f.reader.read(query))!);
+    assert.equal(JSON.stringify(f.state.rows), originalRows, 'period indexing must not mutate Mongo snapshot rows');
     assert.equal(result.product.ec2_vm[0].cpu, '2');
     assert.equal(result.product.ec2_vm[0].periodList, 0);
     assert.deepEqual(result.period.ec2_vm, [[{ periodType: 'MONTH', value: 1 }]]);
@@ -107,6 +113,12 @@ describe('current Mongo fallback repository', () => {
     const failed = fixture();
     failed.state.build.status = 'failed';
     await assert.rejects(failed.reader.read(query), /incomplete/);
+    const foreignService = fixture();
+    foreignService.state.build.request = { channel: 'gray', config: { service: 'other' } };
+    await assert.rejects(foreignService.reader.read(query), /incomplete/);
+    const foreignChannel = fixture();
+    foreignChannel.state.build.request = { channel: 'prod', config: { service: 'ecs' } };
+    await assert.rejects(foreignChannel.reader.read(query), /incomplete/);
     const wrong = fixture();
     wrong.state.current!.site = 'zh-HK';
     await assert.rejects(wrong.reader.read(query), /pointer/);

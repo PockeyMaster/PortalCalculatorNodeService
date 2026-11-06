@@ -33,14 +33,18 @@ export function decodePublishedSku(row: ReaderObject): ReaderObject {
 
 /** 独立恢复现网 periodList 索引；免费镜像和 additionProduct 沿用现网协议。 */
 export function indexPublishedPeriods<T extends ReaderContent>(content: T): T {
-  const copy = cloneValue(content);
-  copy.period = {};
+  return indexPublishedPeriodsInPlace(cloneValue(content));
+}
+
+/** 仅用于调用方独占的新建数据；保持索引、去重和排序协议，但不再复制整份产品。 */
+export function indexPublishedPeriodsInPlace<T extends ReaderContent>(content: T): T {
+  content.period = {};
   const indexed = new WeakSet<ReaderObject>();
   const indexProduct = (product: ReaderObject, bucket: string) => {
     if (bucket === READER_IMAGE_BUCKET || indexed.has(product)) { return; }
     indexed.add(product);
     if (!Array.isArray(product.periodList)) { throw new TypeError('Processors must return expanded periodList arrays'); }
-    const periods = copy.period[bucket] ?? (copy.period[bucket] = []);
+    const periods = content.period[bucket] ?? (content.period[bucket] = []);
     const key = canonical(product.periodList);
     let index = periods.findIndex(item => canonical(item) === key);
     if (index < 0) { index = periods.length; periods.push(product.periodList); }
@@ -51,14 +55,14 @@ export function indexPublishedPeriods<T extends ReaderContent>(content: T): T {
       indexProduct(child, bucket);
     }
   };
-  for (const bucket of Object.keys(copy.product).sort()) {
-    copy.period[bucket] ??= [];
+  for (const bucket of Object.keys(content.product).sort()) {
+    content.period[bucket] ??= [];
     if (bucket === READER_IMAGE_BUCKET) { continue; }
-    copy.product[bucket] = [ ...new Map((copy.product[bucket] ?? []).map(product => [ canonical(product), product ])).entries() ]
+    content.product[bucket] = [ ...new Map((content.product[bucket] ?? []).map(product => [ canonical(product), product ])).entries() ]
       .sort(([ a ], [ b ]) => compare(a, b)).map(([ , product ]) => product);
-    for (const product of copy.product[bucket] ?? []) { indexProduct(product, bucket); }
+    for (const product of content.product[bucket] ?? []) { indexProduct(product, bucket); }
   }
-  return copy;
+  return content;
 }
 
 export function isPublishedCpqPlan(plan: ReaderObject): boolean {
